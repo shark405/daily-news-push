@@ -24,15 +24,15 @@ def get_news(url, source, limit=8):
         r = requests.get(url, headers=h, timeout=20)
         r.encoding = "utf-8"
         s = BeautifulSoup(r.text, "lxml")
-        nav_words = ["русский", "english", "日本語", "한국어", "注册", "登录", "设为首页", "加入收藏",
-                     "关于", "联系", "版权", "隐私", "广告", "投稿", "网站地图", "帮助", "客户端",
-                     "微博", "微信", "邮箱", "导航", "首页", "滚动", "要闻", "直播"]
+        nav_words = ["русский", "english", "日本語", "한국어", "注册", "登录",
+                     "关于我们", "联系我", "版权声明", "隐私政策", "广告服务",
+                     "网站地图", "帮助中心", "客户端下载", "微博", "微信"]
         skip_domains = ["blog.", "wiki.", "bbs.", "forum.", "mall.", "shop."]
         seen = set()
         for a in s.find_all("a", href=True):
             t = a.get_text(strip=True)
             u = a["href"]
-            if not t or len(t) < 15:
+            if not t or len(t) < 12:
                 continue
             # 过滤导航词
             if any(w in t.lower() for w in nav_words):
@@ -41,9 +41,10 @@ def get_news(url, source, limit=8):
                 continue
             seen.add(t)
             # 补齐 URL
+            domain = re.sub(r'https?://', '', url).split('/')[0]
             if u.startswith("//"): u = "https:" + u
-            elif u.startswith("/"): u = "https://" + re.sub(r'https?://', '', url).split('/')[0] + u
-            elif not u.startswith("http"): continue
+            elif u.startswith("/"): u = f"https://{domain}{u}"
+            elif not u.startswith("http"): u = f"https://{domain}/{u}"
             # 跳过垃圾域名
             if any(d in u.lower() for d in skip_domains): continue
             items.append({"title": t, "url": u, "src": source})
@@ -206,4 +207,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
